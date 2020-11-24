@@ -1,0 +1,137 @@
+---
+# tasks file for vireo4.server
+
+- name: create role
+  postgresql_user:
+    name: "{{ vireo_db_user }}"
+    password: "{{ vireo_db_password | default(omit) }}"
+#    password: "{{ vireo_db_password }} | password_hash('bcrypt') }}"
+#    password: "{{ vireo_db_password }} | password_hash('crypt') }}"
+#    password: "{{ vireo_db_password }} | password_hash('sha512') }}"
+  become: yes
+  become_user: postgres
+
+- name: create database
+  postgresql_db:
+    name: "{{vireo_db4_name}}"
+    state: present
+    owner: "{{ vireo_db_user }}"
+  become: yes
+  become_user: postgres
+
+- name: Ensure EBS directory exists.
+  file:
+    path: '{{ vireo_asset_storage_path }}'
+    owner: "{{ vireo_user }}"
+    group: "{{ vireo_group }}"
+    state: directory
+
+- name: Ensure vireo log directory exists.
+  file:
+    path: '{{ vireo_logfile_path }}'
+    owner: "{{ vireo_user }}"
+    group: "{{ vireo_group }}"
+    state: directory
+
+- name: create vireo etd dir
+  file:
+    path: "{{ vireo_homedir }}/etd/Vireo/"
+    state: directory
+    mode: 0755
+  become: yes
+  become_user: '{{vireo_user}}'
+
+- name: git repo
+  git:
+    repo: git://github.com/TexasDigitalLibrary/Vireo.git
+    dest: "{{ vireo_homedir }}/etd/Vireo/"
+    version: "{{vireo_gitbranch}}"
+    force: yes
+  become: yes
+  become_user: "{{vireo_user}}"
+
+- name: set vireo repo ownership
+  file:
+    path: "{{ vireo_homedir }}/etd/Vireo/" 
+    group: "{{ vireo_group }}"
+    owner: "{{ vireo_user }}"
+    recurse: yes
+  become: yes
+
+- name: create application.yaml from j2
+  template:
+    src: application_yaml.j2
+    dest: "{{ vireo_homedir }}/etd/Vireo/src/main/resources/application.yaml"
+    owner: "{{vireo_user}}"
+    mode: 0644
+  become: yes
+
+- name: manually run bashrc
+  shell: |
+    source "{{ vireo_homedir }}/.bashrc"
+  become: yes
+  become_user: '{{ vireo_user }}'
+
+- name: confirm npm
+  shell: |
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+    npm --version
+  become_user: '{{ vireo_user }}'
+
+- name: change to user vireo and build war file
+  shell: |
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+    mvn clean package -DskipTests -Dproduction -Dassets.uri=file://{{ vireo_asset_storage_path }}
+  args:
+    chdir: "{{vireo_homedir}}/etd/Vireo/"
+  become_user: '{{ vireo_user }}'
+
+- name: Copy vireo service script
+  template:
+    src: vireo4_sh.j2
+    dest: "{{ vireo_homedir }}/etd/vireo4.sh" 
+    owner: "{{vireo_user}}"
+    mode: 0764
+  become: yes
+
+- name: Copy vireo service
+  template:
+    src: vireo4_service.j2
+    dest: /lib/systemd/system/vireo4.service
+    owner: "{{vireo_user}}"
+    mode: 0755
+  become: yes
+
+- name: Enable vireo service
+  systemd:
+    name: vireo4
+    enabled: yes
+    masked: no
+    daemon_reload: yes
+    state: restarted
+
+- name: Make sure daemon is reloaded
+  shell: systemctl daemon-reload
+
+- name: Make sure daemon is reloaded
+  shell: systemctl enable vireo4.service
+
+- name: start vireo4
+  service:
+    name: vireo4
+    enabled: yes
+    state: started
+  become: yes
+
+- name: restart httpd
+  service:
+    name: httpd
+    enabled: yes
+    state: restarted
+  become: yes
+
+

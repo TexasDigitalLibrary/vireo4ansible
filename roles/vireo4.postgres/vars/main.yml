@@ -1,0 +1,13 @@
+---
+# vars file for dspace7.postgresql
+__postgresql_version: "10"
+__postgresql_data_dir: "/ebs/pgsql/data"
+__postgresql_bin_path: "/usr/bin"
+__postgresql_config_path: "/ebs/pgsql/data"
+__postgresql_daemon: postgresql
+__postgresql_packages:
+  - postgresql
+  - postgresql-server
+  - postgresql-contrib
+  - postgresql-libs
+  - postgresql-devel

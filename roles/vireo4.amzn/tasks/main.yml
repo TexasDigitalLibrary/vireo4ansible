@@ -1,0 +1,31 @@
+---
+# tasks file for vireo4.amzn
+
+# Variables
+- import_tasks: variables.yml
+
+- name: Enable amazon-linux-extras packages
+  shell: "amazon-linux-extras enable {{ item }}"
+  with_items: "{{ amazon_linux_extras_packages }}"
+  become: true
+
+- name: Install the 'Development tools' package group
+  yum:
+    name: "@Development tools"
+    state: present
+    lock_timeout: 180
+
+- name: Install common packages
+  yum:
+    name: "{{ packages }}"
+    state: present
+    lock_timeout: 180
+  vars:
+    packages:
+      - git
+      - maven
+      - ant
+      - java-1.8.0-openjdk
+      - java-1.8.0-openjdk-devel
+
+

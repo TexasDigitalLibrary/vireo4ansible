@@ -1,0 +1,18 @@
+---
+- name: Enable amazon-linux-extras postgresql10 package
+  command: amazon-linux-extras enable postgresql10
+  become: yes
+
+- name: Ensure PostgreSQL packages are installed.
+  package:
+    name: "{{ item }}"
+    state: present
+    enablerepo: "{{ postgresql_enablerepo }}"
+  with_items: "{{ postgresql_packages }}"
+
+- name: Install PostgreSQL client packages
+  package:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - python-psycopg2

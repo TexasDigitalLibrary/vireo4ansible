@@ -1,0 +1,73 @@
+---
+
+- name: Create vireo Apache configuration
+  vars:
+    use_ssl: "{{ apache_use_ssl }}"
+  template:
+    src: vireo.conf.j2
+    dest: '/etc/httpd/conf.d/vireo.conf'
+  when: not use_ssl
+
+- name: Move old Apache SSL configuration
+  vars:
+    use_ssl: "{{ apache_use_ssl }}"
+  command: mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf_ORIG
+  become: yes
+  when: use_ssl
+
+
+- name:  copying ssl keys(wild__tdl_org_cert-3-2020-renew.cer)
+  vars:
+    use_ssl: "{{ apache_use_ssl }}"
+  copy:
+    src: /shared_storage/ansible/devops/SSL_Certs/SSL_2020_renew/wild_tdl_org/wild__tdl_org_cert-3-2020-renew.cer
+    dest: /etc/pki/tls/certs/wild__tdl_org_cert-3-2020-renew.cer
+    mode: 0400
+  when: use_ssl
+
+- name:  copying ssl keys(wild_tdl_org_server.key)
+  vars:
+    use_ssl: "{{ apache_use_ssl }}"
+  copy:
+    src: /shared_storage/ansible/devops/SSL_Certs/tdl_org/wild_tdl_org_server.key
+    dest: /etc/pki/tls/certs/wild_tdl_org_server.key
+    mode: 0400
+  when: use_ssl
+
+- name:  copying ssl keys(wild__tdl_org_root_interm-5-2020-renew.cer)
+  vars:
+    use_ssl: "{{ apache_use_ssl }}"
+  copy:
+    src: /shared_storage/ansible/devops/SSL_Certs/SSL_2020_renew/wild_tdl_org/wild__tdl_org_root_interm-5-2020-renew.cer
+    dest: /etc/pki/tls/certs/wild__tdl_org_root_interm-5-2020-renew.cer
+    mode: 0400
+  when: use_ssl
+
+
+- name: Create vireo Apache SSL configuration
+  vars:
+    use_ssl: "{{ apache_use_ssl }}"
+  template:
+    src: vireo.ssl.conf.j2
+    dest: '/etc/httpd/conf.d/ssl.conf'
+  when: use_ssl
+
+
+- name: Add config to default Apache config
+  blockinfile:
+    path: /etc/httpd/conf/httpd.conf
+    create: yes
+    content: |
+      ServerName {{ project_hostname }}:80
+      ServerAdmin info@tdl.org
+      UseCanonicalName On
+
+      <VirtualHost *:80>
+        ServerName {{ project_hostname }}
+        # redirect all traffic to https
+        RedirectMatch permanent ^/(.*)$ https://{{ project_hostname }}/$1
+
+        ErrorLog logs/error_log
+        CustomLog logs/access_log combined
+      </VirtualHost>
+    insertafter: EOF

@@ -1,0 +1,91 @@
+---
+# tasks file for vireo4.server
+
+- name: Get Shibboleth
+  template:
+    src: shibboleth.repo.j2
+    dest: "/etc/yum.repos.d/shibboleth.repo"
+    owner: "root"
+    mode: 0764
+  become: yes
+
+- name: Install Shibboleth
+  yum:
+    name: ['shibboleth.x86_64']
+    state: present
+
+- name: Configure shibboleth2.xml
+  template:
+    src: shibboleth2.xml.j2
+    dest: "/etc/shibboleth/shibboleth2.xml"
+    owner: "root"
+    mode: 0644
+  become: yes
+
+- name: Configure attribute-map.xml
+  template:
+    src: attribute-map.xml.j2
+    dest: "/etc/shibboleth/attribute-map.xml"
+    owner: "root"
+    mode: 0644
+  become: yes
+
+##UPDATE VIREO4 APPLICATION.YML AND REBUILD AND RESTART
+
+- name: edit src/main/webapp/app/config/appConfig.js file to use /auth
+  replace:
+    path: "{{ vireo_homedir }}/etd/Vireo/src/main/webapp/app/config/appConfig.js"
+    regexp: '\/mock\/auth'
+    replace: '/auth'
+    owner: "{{vireo_user}}"
+  become: yes
+
+- name: edit src/main/webapp/app/config/appConfig.js file
+  replace:
+    path: "{{ vireo_homedir }}/etd/Vireo/src/main/webapp/app/config/appConfig.js"
+    regexp: "'mockRole': 'admin'"
+    replace: "'mockRole': false"
+    owner: "{{vireo_user}}"
+  become: yes
+
+
+- name: change to user vireo and build war file
+  shell: |
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+    mvn clean package -DskipTests -Dproduction -Dassets.uri=file://{{ vireo_asset_storage_path }}
+  args:
+    chdir: "{{vireo_homedir}}/etd/Vireo/"
+  become_user: '{{ vireo_user }}'
+
+- name: stop vireo4
+  service:
+    name: vireo4
+    enabled: yes
+    state: stopped
+  become: yes
+
+- name: start vireo4
+  service:
+    name: vireo4
+    enabled: yes
+    state: started
+  become: yes
+
+- name: start shibboleth
+  service:
+    name: shibd
+    enabled: yes
+    state: restarted
+  become: yes
+#  ignore_errors: yes
+
+- name: restart httpd
+  service:
+    name: httpd
+    enabled: yes
+    state: restarted
+  become: yes
+
+

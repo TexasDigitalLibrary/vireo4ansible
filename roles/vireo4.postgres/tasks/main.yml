@@ -1,0 +1,55 @@
+---
+# tasks file for dspace7.postgresql
+
+# Variables
+- import_tasks: variables.yml
+
+# Setup/install tasks
+- import_tasks: setup.yml
+
+# Initiatlize
+- include_tasks: initialize.yml
+
+# Configure
+- include_tasks: configure.yml
+
+- name: Copy PostgreSQL pg_hba configuration
+  copy:
+    src: files/pg_hba.conf
+    dest: /ebs/pgsql/data
+    owner: postgres
+    group: postgres
+    backup: yes
+
+#- name: Copy server.cer for PostgreSQL
+#  copy:
+#    src: files/server.cer
+#    dest: /ebs/pgsql/data
+#    owner: postgres
+#    group: postgres
+#    mode: 0400
+
+#- name: Copy server.key for PostgreSQL
+#  copy:
+#    src: files/server.key
+#    dest: /ebs/pgsql/data
+#    owner: postgres
+#    group: postgres
+#    mode: 0400
+
+- name: Ensure PostgreSQL is started and enabled on boot.
+  service:
+    name: "{{ postgresql_daemon }}"
+    state: started
+    enabled: yes
+  become: yes
+
+# Configure PostgreSQL databases.
+- include_tasks: databases.yml
+- include_tasks: users.yml
+
+- name: Restart PostgreSQL server
+  service:
+    name: "{{ postgresql_daemon }}"
+    state: restarted
+  become: yes

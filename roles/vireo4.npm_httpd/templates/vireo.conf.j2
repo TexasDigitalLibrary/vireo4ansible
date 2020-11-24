@@ -1,0 +1,37 @@
+
+<VirtualHost *:80>
+    <Directory /ebs>
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    RequestHeader set X-Forwarded-Proto "https"
+    ProxyPreserveHost On
+    UseCanonicalName On
+    DocumentRoot "/var/www/html"
+    ServerName {{ project_hostname }}
+
+    ProxyPass / http://localhost:8080/
+    ProxyPassReverse / http://localhost:8080/
+    ProxyRequests Off
+    ProxyPass /robots.txt !
+    RewriteEngine on
+    RewriteCond %{HTTP:UPGRADE} ^WebSocket$ [NC]
+    RewriteCond %{HTTP:CONNECTION} Upgrade$ [NC]
+    RewriteRule .* ws://localhost:8080%{REQUEST_URI} [P]
+
+#    ErrorLog    logs/ssl_error_log
+#    TransferLog logs/ssl_access_log
+    LogLevel info
+#    SSLEngine on
+#    SSLProtocol all -SSLv2
+#    SSLCipherSuite ALL:!ADH:!EXPORT:!SSLv2:RC4+RSA:+HIGH:+MEDIUM:+LOW
+#    SSLCertificateFile /etc/pki/tls/certs/wild__tdl_org_cert-2.cer
+#    SSLCertificateKeyFile /etc/pki/tls/certs/wild_tdl_org_server.key
+#    SSLCertificateChainFile /etc/pki/tls/certs/wild__tdl_org_interm.cer
+
+#    CustomLog logs/ssl_request_log \
+#              "%t %h %{SSL_PROTOCOL}x %{SSL_CIPHER}x \"%r\" %b"
+
+</VirtualHost>
+

@@ -1,0 +1,50 @@
+---
+# DESTINATION - leave as all,localhost for vagrant deployment
+tdl_tagname: all
+project_hostname: localhost
+
+
+
+#NPM_HTTPD - set up home directory and choose SSL - false for local vagrant deployment
+vireo_homedir: /home/vireo4/
+#apache_use_ssl: true
+apache_use_ssl: false
+
+
+#SERVER
+vireo_gitbranch: 4.1.0_nov2020
+#vireo_gitbranch: 4.1.0_nov2020_staging
+
+vireo_warversion: 4.1.0
+
+
+
+vireo_db_user: 'vireodb'
+vireo_db_password: 'vireodb'
+vireo_db4_name: 'vireo4'
+
+vireo_user: vireo4
+vireo_password: vireo4
+vireo_group: vireo4
+
+vireo_asset_storage_path: /ebs/vireo/private
+vireo_logfile_path: /ebs/vireo/logs
+vireo_logfile_name: application.log
+
+#EMAIL settings for application.yml - username/password overridden during institution specific deploys
+email_host: 'email-smtp.us-east-1.amazonaws.com'
+email_username: 'test'
+email_password: 'test'
+
+# VIREO4.npm_httpd
+nvm_version: 0.35.1
+node_version: 12.13.1
+nvm_url: https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh
+
+
+# POSTGRES database config
+vireo_db_source: 'local'        # options are local and rds
+vireo_db_host: localhost
+vireo_db_port: 5432
+
+

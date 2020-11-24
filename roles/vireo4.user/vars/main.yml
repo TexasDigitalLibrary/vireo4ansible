@@ -1,0 +1,5 @@
+---
+# vars file for tdl.common
+__amazon_linux_extras_packages:
+  - tomcat8.5
+#  - memcached1.5

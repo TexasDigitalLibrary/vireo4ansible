@@ -1,0 +1,40 @@
+<VirtualHost *:443>
+  ServerName {{ project_hostname }}
+  ServerAlias *
+
+  <Directory /ebs>
+    AllowOverride All
+    Require all granted
+  </Directory>
+  Alias /robots.txt /ebs/robots.txt
+
+  RequestHeader set X-Forwarded-Proto "https"
+  ProxyPreserveHost On
+  UseCanonicalName On
+  DocumentRoot "/var/www/html"
+
+  ProxyPass         /  http://localhost:3000/
+  ProxyPassReverse  /  http://localhost:3000/
+
+  <Location /fuseki/>
+      ProxyPass http://localhost:3030/
+      ProxyPassReverse /
+      ProxyHTMLURLMap / /fuseki/
+  </Location>
+
+  LogLevel warn
+  CustomLog logs/ssl_access_log combined
+  ErrorLog logs/ssl_error_log
+
+  SSLEngine on
+  SSLProtocol all -SSLv2
+  SSLCipherSuite ALL:!ADH:!EXPORT:!SSLv2:RC4+RSA:+HIGH:+MEDIUM:+LOW
+  SSLCertificateFile /etc/pki/tls/certs/wild__tdl_org_cert-2.cer
+  SSLCertificateKeyFile /etc/pki/tls/certs/wild_tdl_org_server.key
+  SSLCertificateChainFile /etc/pki/tls/certs/wild__tdl_org_interm.cer
+
+  CustomLog logs/ssl_request_log \
+    "%t %h %{SSL_PROTOCOL}x %{SSL_CIPHER}x \"%r\" %b"
+
+  ServerSignature Off
+</VirtualHost>

@@ -1,0 +1,23 @@
+<VirtualHost *:80>
+  ServerName {{ project_hostname }}
+  ServerAlias *
+
+  <Directory /ebs>
+    AllowOverride All
+    Require all granted
+  </Directory>
+  Alias /robots.txt /ebs/robots.txt
+
+  ProxyPreserveHost On
+  UseCanonicalName On
+  DocumentRoot "/var/www/html"
+  
+  ProxyPass         /  http://localhost:3000/
+  ProxyPassReverse  /  http://localhost:3000/
+
+  LogLevel warn
+  CustomLog logs/access_log combined
+  ErrorLog logs/error_log
+
+  ServerSignature Off
+</VirtualHost>

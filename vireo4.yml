@@ -1,0 +1,22 @@
+---
+- name: Provision a Vireo4 instance
+  hosts: "{{ tdl_tagname }}"
+  become: true
+  vars_files:
+    - vars_vireo4.yml
+#    - vars_shsu_test.yml	#specific to an institution deployment
+  vars:
+    db_source: "{{ vireo_db_source }}"
+  gather_facts: true
+  roles:
+    - vireo4.amzn	#amazon linux extras, git,maven,ant,java,tomcat
+    - vireo4.user	#create vireo user and give sudo
+    - { role: vireo4.postgres, when: db_source == 'local' } #Needs to be cleaned up - borrowed in part from dspace
+    - vireo4.apache	#apache plus certs (NEEDS TO BE UPDATED)
+    - vireo4.npm_httpd
+    - vireo4.server
+#    - vireo4.shibboleth
+
+
+
+

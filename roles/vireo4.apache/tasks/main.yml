@@ -1,0 +1,35 @@
+---
+# tasks file for tdl.apache
+- name: Install Apache2
+  yum:
+    name: ['httpd', 'httpd-tools', 'httpd-devel', 'mod_proxy_html', 'mod_ssl']
+    state: present
+
+# CRED /home/ec2-user/PROD-NEW/credentials/${institution}/ssh.pem
+# RUBY PROG Vireo::UpdateCerts.copyCert("trinity","10.109.0.105","trinity-migrate-etd")
+# SRC_DIR(jumpbox) /shared_storage/ansible/devops/SSL_Certs/SSL_2020_renew/wild_tdl_org/
+# DEST (server) /etc/pki/tls/certs/
+
+
+#- name: Copy SSL files
+#  vars:
+#    use_ssl: "{{ apache_use_ssl }}"
+#  copy:
+#    src: "/shared_storage/ansible/devops/SSL_Certs/tdl_org/{{ item }}"
+#    dest: /etc/pki/tls/certs
+#    owner: root
+#    group: root
+#  with_items:
+#    - wild__tdl_org_cert-2.cer
+#    - wild_tdl_org_server.key
+#    - wild__tdl_org_interm.cer
+#  remote_src: yes
+#  when: use_ssl
+
+# Restart Apache in all cases
+- service:
+    name: httpd
+    enabled: yes
+    state: restarted
+  become: yes
+  ignore_errors: yes
